@@ -30,6 +30,13 @@ assert.equal(s.trace.chunks, 3);
 assert.equal(s.trace.thoughtChunks, 1);
 assert.ok(s.trace.firstTextMs !== null && s.trace.doneMs !== null);
 
+// Flash-Lite models get no thinking setting by default.
+const lite = { models: { generateContentStream: async (req) => {
+  assert.equal(req.config.thinkingConfig, undefined);
+  return (async function* () { yield { text: '# T\n\nHi.' }; })();
+} } };
+await generateStory({ name: 'Maya', age: 4, topic: 'x', minutes: 2 }, { client: lite, model: 'gemini-flash-lite-latest' });
+
 const empty = { models: { generateContentStream: async () => (async function* () {})() } };
 await assert.rejects(generateStory({ name: 'Maya', age: 4, topic: 'x', minutes: 2 }, { client: empty }), /empty response/);
 

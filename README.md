@@ -45,8 +45,8 @@ Settings (env vars, or options to `generateStory`/`streamStory`):
 
 | Env var | Option | Default | |
 | --- | --- | --- | --- |
-| `GEMINI_MODEL` | `model` | `gemini-3.8-flash` | Which Gemini model to use. |
-| `GEMINI_THINKING_LEVEL` | `thinkingLevel` | `LOW` | `MINIMAL`, `LOW`, `MEDIUM`, `HIGH`. Higher is slower; stories rarely benefit. |
+| `GEMINI_MODEL` | `model` | `gemini-flash-lite-latest` | Which Gemini model to use. |
+| `GEMINI_THINKING_LEVEL` | `thinkingLevel` | model default for Flash-Lite, else `LOW` | `MINIMAL`, `LOW`, `MEDIUM`, `HIGH`. Higher is slower; stories rarely benefit. |
 | | `timeoutMs` | `240000` | Gives up on Gemini after this long. |
 
 The eval results include `firstChunkMs` (time until text starts appearing) and `latencyMs` (time for the whole story).
