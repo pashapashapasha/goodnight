@@ -4,7 +4,7 @@
   "description": "Bedtime story generator (Gemini + Vercel)",
   "scripts": {
     "test": "node scripts/test.js",
-    "eval:bt": "node --env-file-if-exists=.env node_modules/braintrust/dist/cli.js eval evals/story.eval.js",
+    "eval:bt": "node --env-file-if-exists=.env --env-file-if-exists=.env.local node_modules/braintrust/dist/cli.js eval evals/story.eval.js",
     "eval:local": "node scripts/eval.js",
     "dev": "vercel dev"
   },

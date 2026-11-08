@@ -39,7 +39,7 @@ The run's summary page shows the scores and a link to the experiment in Braintru
 ### Locally
 
 1. Sign up at https://www.braintrust.dev (the free tier is enough) and create an API key under **Settings → API keys**.
-2. Copy `.env.example` to `.env` and fill in `GEMINI_API_KEY` and `BRAINTRUST_API_KEY`.
+2. Copy `.env.example` to `.env` and fill in `GEMINI_API_KEY` and `BRAINTRUST_API_KEY`. Or, if the keys are already set in Vercel, pull them with `vercel env pull .env.local` (both files are loaded, `.env.local` wins).
 3. Run:
 
 ```bash
