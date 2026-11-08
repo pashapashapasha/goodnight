@@ -70,3 +70,9 @@ GEMINI_API_KEY=your-key vercel dev
 `vercel.json` allows the story function to run for up to 300 seconds. This needs Fluid Compute, which is on by default for new projects (Project → Settings → Functions). If a deploy fails with a `maxDuration` error, turn Fluid Compute on, or lower the value to 60.
 
 The API key only lives on the server; the browser never sees it.
+
+## Troubleshooting
+
+Open `https://<your-site>.vercel.app/api/health`. It makes a few tiny Gemini requests with the deployed key and shows, for each one, whether it worked, how long it took and any error, plus the Flash models your key can use. Each request to it uses a little of your Gemini quota.
+
+The story function also logs each step (`story: calling Gemini`, `first text after …`, `finished after …`) in the Vercel project's Logs tab.

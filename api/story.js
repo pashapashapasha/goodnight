@@ -39,13 +39,17 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: err.message });
   }
 
+  const started = Date.now();
+  const elapsed = () => `${Date.now() - started}ms`;
+  console.log(`story: calling Gemini (model=${process.env.GEMINI_MODEL || 'default'}, minutes=${input.minutes})`);
   const chunks = streamStory(input);
   let first;
   try {
     // Wait for the first chunk so early failures still get a proper status code.
     first = await chunks.next();
+    console.log(`story: first text after ${elapsed()}`);
   } catch (err) {
-    console.error(err);
+    console.error(`story: failed after ${elapsed()}:`, err);
     const { status, error } = friendlyError(err);
     return res.status(status).json({ error });
   }
@@ -62,9 +66,10 @@ export default async function handler(req, res) {
       text += chunk;
       send({ type: 'text', text: chunk });
     }
+    console.log(`story: finished after ${elapsed()}`);
     send({ type: 'done', wordCount: countWords(parseStory(text).body), targetWords: targetWordCount(input.minutes) });
   } catch (err) {
-    console.error(err);
+    console.error(`story: failed mid-stream after ${elapsed()}:`, err);
     send({ type: 'error', error: friendlyError(err).error });
   }
   res.end();
