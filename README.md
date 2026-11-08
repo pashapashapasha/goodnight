@@ -11,6 +11,7 @@ A small web app that writes a bedtime story from a child's name, age, topic and 
 | `public/index.html` | The UI (plain HTML/JS, no build step). |
 | `evals/cases.json` | Test inputs for evaluating generation. |
 | `evals/story.eval.js` | Braintrust eval: runs the cases and scores each story. |
+| `evals/hello.eval.js` | One-row smoke test: checks the Braintrust SDK, CLI and API key work (`npx braintrust eval --env-file .env.local evals/hello.eval.js`). |
 | `evals/scorers.js` | Scorers: length, name use, format, and a Gemini judge. |
 | `scripts/eval.js` | Simple local eval without Braintrust: saves stories + metrics to `evals/runs/<timestamp>/`. |
 | `scripts/test.js` | Offline unit tests using a fake Gemini client. |
