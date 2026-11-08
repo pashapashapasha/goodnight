@@ -25,7 +25,7 @@ for (const [i, c] of cases.entries()) {
   try {
     const s = await generateStory(c, { model });
     const lengthRatio = +(s.wordCount / s.targetWords).toFixed(2);
-    const mentionsName = s.body.includes(c.name);
+    const mentionsName = c.name ? s.body.includes(c.name) : null;
     results.push({ ...c, ok: true, model: s.model, title: s.title, wordCount: s.wordCount, targetWords: s.targetWords, lengthRatio, mentionsName, geminiResponseMs: s.trace.geminiResponseMs, thoughtsTokens: s.trace.thoughtsTokens, firstChunkMs: s.firstChunkMs, latencyMs: s.latencyMs, trace: s.trace });
     await writeFile(new URL(`${c.id}.md`, outDir), `# ${s.title}\n\n${s.body}\n\n---\nprompt:\n${s.prompt}\n`);
     console.log(`${s.wordCount}/${s.targetWords} words (x${lengthRatio}), ${s.latencyMs}ms`);

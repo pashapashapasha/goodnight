@@ -1,6 +1,6 @@
 # Goodnight
 
-A small web app that writes a bedtime story from a child's name, age, topic and reading time, using the Gemini API. Hosted on Vercel.
+A small web app that writes a bedtime story from a child's name, age, topic and reading time (all optional), using the Gemini API. Hosted on Vercel.
 
 ## Layout
 
@@ -73,6 +73,6 @@ The API key only lives on the server; the browser never sees it.
 
 ## Troubleshooting
 
-After every story (or failure) the page shows **Where the time went**: when the request reached the server, when it was sent to Gemini, when Gemini replied, when it started thinking, when the first story words arrived and when it finished, plus the model version, token counts (including thinking tokens) and any error. The same trace is logged in the Vercel project's Logs tab (`story: done {...}` / `story: failed {...}`) and included in eval results.
+Each story request logs a timing trace in the Vercel project's Logs tab (`story: done {...}` / `story: failed {...}`): when it was sent to Gemini, when Gemini replied, when thinking and the first story words arrived, the model version, token counts and any error. Evals record the same trace.
 
 `/api/health` runs a few tiny Gemini requests with the deployed key and a speed comparison of model/thinking setups. Each visit uses a little of your Gemini quota.

@@ -53,7 +53,7 @@ export default async function handler(req, res) {
   const since = () => Date.now() - trace.t0;
 
   send({ type: 'progress', stage: 'server', ms: since() });
-  const onProgress = (t, stage) => {
+  const onProgress = (_trace, stage) => {
     send({ type: 'progress', stage, ms: since() });
     console.log(`story: ${stage} at ${since()}ms`);
   };

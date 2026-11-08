@@ -2,136 +2,295 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1236">
 <title>Goodnight Stories</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌙</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Nunito:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#14183a; --card:#1f2550; --text:#eef0ff; --muted:#a9b0e0; --accent:#ffd27a; --err:#ff9a9a; }
+  :root {
+    --sky-top: #0f1236;
+    --sky-mid: #262a6b;
+    --sky-low: #4a3a7a;
+    --card: rgba(255, 255, 255, 0.08);
+    --card-border: rgba(255, 255, 255, 0.14);
+    --text: #f4f1ff;
+    --muted: #c5c0ec;
+    --gold: #ffd98a;
+    --gold-deep: #f7b955;
+    --pink: #ffb3c7;
+    --page: #fff8ea;
+    --ink: #3b3355;
+    --err: #ffb0b0;
+  }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: Georgia, "Times New Roman", serif; background: radial-gradient(circle at 20% 0%, #2a3170, var(--bg) 60%); color:var(--text); min-height:100vh; }
-  main { max-width: 680px; margin: 0 auto; padding: 32px 16px 64px; }
-  h1 { font-weight: normal; margin: 0 0 4px; } h1 span { color: var(--accent); }
-  .sub { color: var(--muted); margin: 0 0 24px; }
-  form, article { background: var(--card); border-radius: 14px; padding: 20px; }
-  label { display:block; font-size: 14px; color: var(--muted); margin: 12px 0 4px; font-family: system-ui, sans-serif; }
-  input { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #3a4285; background:#141a40; color:var(--text); font-size:16px; }
-  .row { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  button { margin-top:18px; width:100%; padding:12px; border:0; border-radius:8px; background:var(--accent); color:#1b1b2e; font-size:16px; font-weight:600; cursor:pointer; font-family: system-ui, sans-serif; }
-  button:disabled { opacity:.6; cursor:wait; }
-  .error { color: var(--err); font-family: system-ui, sans-serif; margin-top: 12px; }
-  article { margin-top: 24px; line-height: 1.7; font-size: 18px; }
-  article h2 { font-weight: normal; color: var(--accent); margin-top: 0; }
-  .meta { color: var(--muted); font-size: 13px; font-family: system-ui, sans-serif; }
-  .status { color: var(--muted); font-size: 14px; font-family: system-ui, sans-serif; margin-top: 10px; display:flex; align-items:center; gap:8px; }
-  .moon { width:14px; height:14px; border-radius:50%; box-shadow: 4px -2px 0 0 var(--accent); animation: spin 1.6s linear infinite; }
+  html { background: var(--sky-top); }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font-family: Nunito, system-ui, sans-serif;
+    background: var(--sky-top);
+    overflow-x: hidden;
+  }
+
+  /* ---------- the sky ---------- */
+  .sky {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-low) 100%);
+  }
+  .star {
+    position: absolute; border-radius: 50%; background: #fff;
+    animation: twinkle var(--d, 3s) ease-in-out var(--delay, 0s) infinite;
+  }
+  @keyframes twinkle { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
+  .moon {
+    position: absolute; top: 28px; right: max(20px, calc(50% - 360px));
+    width: 84px; height: 84px; border-radius: 50%;
+    box-shadow: 18px -10px 0 0 var(--gold);
+    filter: drop-shadow(0 0 22px rgba(255, 217, 138, .55));
+    transform: rotate(-12deg);
+    animation: bob 7s ease-in-out infinite;
+  }
+  @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 6px; } }
+  .cloud {
+    position: absolute; height: 34px; border-radius: 40px; background: rgba(255, 255, 255, .07);
+    animation: drift linear infinite;
+  }
+  .cloud::before, .cloud::after { content: ""; position: absolute; background: inherit; border-radius: 50%; }
+  .cloud::before { width: 46%; height: 150%; left: 14%; top: -60%; }
+  .cloud::after { width: 34%; height: 120%; left: 50%; top: -40%; }
+  @keyframes drift { from { transform: translateX(-30vw); } to { transform: translateX(130vw); } }
+  .shooting {
+    position: absolute; top: 12%; left: -10%; width: 120px; height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.9));
+    transform: rotate(18deg); opacity: 0;
+    animation: shoot 11s ease-in 4s infinite;
+  }
+  @keyframes shoot {
+    0% { opacity: 0; translate: 0 0; }
+    2% { opacity: 1; }
+    8% { opacity: 0; translate: 70vw 24vh; }
+    100% { opacity: 0; translate: 70vw 24vh; }
+  }
+
+  /* ---------- layout ---------- */
+  main { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 56px 16px 80px; }
+  header { margin-bottom: 26px; }
+  h1 {
+    font-family: Fredoka, Nunito, sans-serif; font-weight: 600;
+    font-size: clamp(36px, 9vw, 52px); line-height: 1.05; margin: 0 0 10px; letter-spacing: .5px;
+  }
+  h1 .gold { color: var(--gold); text-shadow: 0 0 18px rgba(255, 217, 138, .45); }
+  .sub { color: var(--muted); margin: 0; font-size: 17px; }
+
+  form {
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 28px; padding: 22px 20px 24px;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 20px 50px rgba(5, 6, 30, .35);
+  }
+  .hint { color: var(--muted); font-size: 14px; margin: 0 0 6px; }
+  label {
+    display: flex; align-items: center; gap: 6px;
+    font-family: Fredoka, Nunito, sans-serif; font-weight: 500; font-size: 16px;
+    margin: 16px 0 6px; color: var(--text);
+  }
+  label .opt { color: var(--muted); font-family: Nunito, sans-serif; font-weight: 400; font-size: 13px; }
+  input {
+    width: 100%; padding: 13px 16px; border-radius: 16px;
+    border: 2px solid transparent; background: rgba(10, 12, 45, .55); color: var(--text);
+    font: 600 17px Nunito, system-ui, sans-serif; outline: none;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+  }
+  input::placeholder { color: #8f8bbd; font-weight: 400; }
+  input:focus { border-color: var(--gold); box-shadow: 0 0 0 5px rgba(255, 217, 138, .18); background: rgba(10, 12, 45, .75); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip {
+    border: 1px solid var(--card-border); background: rgba(255, 255, 255, .06); color: var(--text);
+    border-radius: 999px; padding: 7px 12px; font: 600 14px Nunito, sans-serif; cursor: pointer;
+    transition: transform .15s, background .2s, border-color .2s;
+  }
+  .chip:hover { background: rgba(255, 217, 138, .16); border-color: var(--gold); transform: translateY(-1px) rotate(-1deg); }
+  .chip:active { transform: scale(.96); }
+
+  .go {
+    position: relative; margin-top: 24px; width: 100%; padding: 16px; border: 0; border-radius: 999px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%); color: #2c2246;
+    font: 600 19px Fredoka, Nunito, sans-serif; letter-spacing: .3px; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(247, 185, 85, .35), inset 0 -3px 0 rgba(0, 0, 0, .08);
+    transition: transform .15s, box-shadow .2s, filter .2s;
+  }
+  .go:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(247, 185, 85, .45); }
+  .go:active { transform: translateY(1px) scale(.99); }
+  .go:disabled { cursor: wait; filter: saturate(.7) brightness(.9); transform: none; }
+
+  .status { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; color: var(--muted); font-size: 16px; min-height: 24px; }
+  .status .sparkle { display: inline-block; animation: spin 2.4s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  #timing { margin-top: 24px; background: var(--card); border-radius: 14px; padding: 14px 20px; font-family: system-ui, sans-serif; font-size: 13px; color: var(--muted); }
-  #timing summary { cursor: pointer; color: var(--text); }
-  #timing table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-  #timing td, #timing th { text-align: left; padding: 3px 6px; border-bottom: 1px solid #2c3470; font-weight: normal; }
-  #timing td.n, #timing th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  #timing .slow { color: var(--err); }
-  #timing p { margin: 8px 0 0; }
-  [hidden] { display:none !important; }
+  .error { color: var(--err); margin: 14px 0 0; text-align: center; }
+
+  /* ---------- the storybook page ---------- */
+  article {
+    position: relative; margin-top: 30px; padding: 34px 26px 30px;
+    background: var(--page); color: var(--ink); border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(5, 6, 30, .45), 0 0 0 6px rgba(255, 248, 234, .12);
+    font-family: Lora, Georgia, serif; font-size: 19px; line-height: 1.75;
+    animation: rise .6s ease-out;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  article::before {
+    content: "✦ ✧ ✦"; position: absolute; top: 12px; left: 0; right: 0; text-align: center;
+    color: #d9b46a; font-size: 12px; letter-spacing: 6px;
+  }
+  article h2 {
+    font-family: Fredoka, Nunito, sans-serif; font-weight: 600; color: #5b4a8b;
+    font-size: clamp(24px, 6vw, 30px); line-height: 1.2; text-align: center; margin: 4px 0 22px;
+  }
+  article p { margin: 0 0 1em; }
+  #body p:first-child::first-letter {
+    float: left; font-family: Fredoka, sans-serif; font-weight: 600; color: #c98a2b;
+    font-size: 3.1em; line-height: .9; padding: 6px 8px 0 0;
+  }
+  .the-end {
+    text-align: center; font-family: Fredoka, Nunito, sans-serif; font-weight: 500;
+    color: #8a76c4; font-size: 20px; margin: 22px 0 0;
+  }
+  .again {
+    display: block; margin: 22px auto 0; border: 2px solid #e6d7b8; background: transparent; color: #6b5a9b;
+    border-radius: 999px; padding: 10px 18px; font: 600 16px Fredoka, Nunito, sans-serif; cursor: pointer;
+  }
+  .again:hover { background: #f6ebd3; }
+
+  footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 40px; opacity: .8; }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 420px) {
+    main { padding-top: 44px; }
+    .moon { width: 64px; height: 64px; top: 18px; box-shadow: 14px -8px 0 0 var(--gold); }
+    article { padding: 32px 20px 26px; font-size: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .shooting { display: none; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <h1>Goodnight <span>Stories</span></h1>
-  <p class="sub">A fresh bedtime story, made for your little one.</p>
+<div class="sky" aria-hidden="true">
+  <div class="moon"></div>
+  <div class="shooting"></div>
+</div>
 
-  <form id="form">
-    <label for="name">Child's name</label>
-    <input id="name" name="name" required maxlength="40" placeholder="Maya">
+<main>
+  <header>
+    <h1>Goodnight <span class="gold">Stories</span></h1>
+    <p class="sub">A brand-new bedtime story, spun from moonlight just for tonight.</p>
+  </header>
+
+  <form id="form" novalidate>
+    <p class="hint">Fill in as much or as little as you like. We'll dream up the rest.</p>
+
+    <label for="name">🧸 Who's the story for? <span class="opt">optional</span></label>
+    <input id="name" name="name" maxlength="40" autocomplete="off" placeholder="e.g. Maya">
+
     <div class="row">
       <div>
-        <label for="age">Age</label>
-        <input id="age" name="age" type="number" min="1" max="12" value="5" required>
+        <label for="age">🎈 Age <span class="opt">optional</span></label>
+        <input id="age" name="age" type="number" inputmode="numeric" min="1" max="12" placeholder="e.g. 5">
       </div>
       <div>
-        <label for="minutes">Reading time (minutes)</label>
-        <input id="minutes" name="minutes" type="number" min="1" max="20" value="5" required>
+        <label for="minutes">⏳ Minutes <span class="opt">optional</span></label>
+        <input id="minutes" name="minutes" type="number" inputmode="numeric" min="1" max="20" placeholder="e.g. 5">
       </div>
     </div>
-    <label for="topic">What should it be about?</label>
-    <input id="topic" name="topic" required maxlength="200" placeholder="a sleepy dragon who is afraid of the dark">
-    <button id="go" type="submit">Tell me a story</button>
-    <div id="status" class="status" hidden><span class="moon"></span><span id="statusText"></span></div>
-    <div id="error" class="error" hidden></div>
+
+    <label for="topic">✨ What should it be about? <span class="opt">optional</span></label>
+    <input id="topic" name="topic" maxlength="200" autocomplete="off" placeholder="Anything at all, or leave it to us">
+    <div class="chips" id="chips">
+      <button type="button" class="chip">🐉 a sleepy dragon</button>
+      <button type="button" class="chip">🐌 a brave little snail</button>
+      <button type="button" class="chip">☁️ a cloud who can't float</button>
+      <button type="button" class="chip">🧺 a picnic on the moon</button>
+      <button type="button" class="chip">🐻 a bear who lost his yawn</button>
+    </div>
+
+    <button class="go" id="go" type="submit">Tell me a story 🌙</button>
+    <div id="status" class="status" hidden><span class="sparkle">✨</span><span id="statusText"></span></div>
+    <p id="error" class="error" hidden></p>
   </form>
 
-  <article id="story" hidden>
+  <article id="story" hidden aria-live="polite">
     <h2 id="title"></h2>
     <div id="body"></div>
-    <p class="meta" id="meta"></p>
+    <p class="the-end" id="theEnd" hidden>✨ The End ✨</p>
+    <button type="button" class="again" id="again" hidden>Another story, please</button>
   </article>
 
-  <details id="timing" hidden open>
-    <summary>Where the time went</summary>
-    <table>
-      <thead><tr><th>Step</th><th class="n">Seen by page</th><th class="n">On server</th></tr></thead>
-      <tbody id="timingRows"></tbody>
-    </table>
-    <p id="timingNotes"></p>
-  </details>
+  <footer>Sweet dreams 💤</footer>
 </main>
+
 <script>
   const $ = (id) => document.getElementById(id);
   const form = $('form'), btn = $('go'), errEl = $('error'), storyEl = $('story');
 
-  const STAGES = [
-    ['server', 'Request reached the server', 'Connected. Asking Gemini…'],
-    ['gemini-request', 'Request sent to Gemini', 'Waiting for Gemini…'],
-    ['gemini-response', 'Gemini replied', 'Gemini replied, waiting for the story…'],
-    ['thinking', 'Gemini started thinking', 'Gemini is thinking…'],
-    ['writing', 'First story words', 'Writing…'],
-    ['end', 'Finished', ''],
+  // ---------- sky: scatter stars and clouds ----------
+  (function makeSky() {
+    const sky = document.querySelector('.sky');
+    const count = Math.round(Math.min(110, (innerWidth * innerHeight) / 9000));
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = Math.random() < 0.85 ? 1 + Math.random() * 1.5 : 2.5 + Math.random() * 1.5;
+      s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random() * 100}%;top:${Math.random() * 85}%;` +
+        `--d:${2 + Math.random() * 4}s;--delay:${-Math.random() * 6}s`;
+      sky.append(s);
+    }
+    for (let i = 0; i < 3; i++) {
+      const c = document.createElement('div');
+      c.className = 'cloud';
+      const w = 120 + Math.random() * 120;
+      c.style.cssText = `width:${w}px;top:${18 + i * 26 + Math.random() * 8}%;` +
+        `animation-duration:${70 + Math.random() * 60}s;animation-delay:${-Math.random() * 120}s`;
+      sky.append(c);
+    }
+  })();
+
+  // ---------- topic chips ----------
+  $('chips').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    $('topic').value = chip.textContent.replace(/^\S+\s/, ''); // drop the emoji
+    $('topic').focus();
+  });
+
+  // ---------- story rendering ----------
+  const WAITING = [
+    'Gathering stardust…', 'Asking the moon for ideas…', 'Fluffing the pillows…',
+    'Waking up the storyteller owl…', 'Sprinkling a little magic…', 'Tucking in the characters…',
   ];
-  const sec = (ms) => ms == null ? '–' : (ms / 1000).toFixed(1) + 's';
 
   function setStatus(text) {
     $('status').hidden = !text;
     $('statusText').textContent = text || '';
   }
 
-  // Model output is "# Title\n\nparagraphs..." and may be partial while streaming.
+  // Model output is "# Title\n\nparagraphs…" and may be partial while streaming.
   function render(text) {
     const m = text.match(/^\s*#\s*([^\n]*)\n?([\s\S]*)$/);
     const title = m ? m[1].trim() : '';
     const body = m ? m[2] : text;
     $('title').textContent = title;
     $('title').hidden = !title;
-    $('body').replaceChildren(...body.split(/\n\s*\n/).filter(p => p.trim()).map(p => {
+    $('body').replaceChildren(...body.split(/\n\s*\n/).filter((p) => p.trim()).map((p) => {
       const el = document.createElement('p'); el.textContent = p.trim(); return el;
     }));
     storyEl.hidden = !text.trim();
-  }
-
-  // seen: stage -> ms since click (as observed by the page); server: stage -> ms on server.
-  function renderTiming(seen, server, trace) {
-    const rows = STAGES.filter(([k]) => seen[k] != null || server[k] != null).map(([k, label], i, arr) => {
-      const prev = i > 0 ? seen[arr[i - 1][0]] : 0;
-      const slow = seen[k] != null && prev != null && seen[k] - prev > 5000;
-      const tr = document.createElement('tr');
-      if (slow) tr.className = 'slow';
-      for (const [v, cls] of [[label, ''], [sec(seen[k]), 'n'], [sec(server[k]), 'n']]) {
-        const td = document.createElement('td'); td.textContent = v; if (cls) td.className = cls; tr.append(td);
-      }
-      return tr;
-    });
-    $('timingRows').replaceChildren(...rows);
-
-    const notes = [];
-    if (trace) {
-      notes.push(`Model: ${trace.modelVersion || trace.model}, thinking ${trace.thinkingLevel}.`);
-      if (trace.geminiStatus) notes.push(`Gemini HTTP status ${trace.geminiStatus}.`);
-      const tok = [['prompt', trace.promptTokens], ['thinking', trace.thoughtsTokens], ['story', trace.outputTokens]]
-        .filter(([, n]) => n != null).map(([k, n]) => `${n} ${k}`);
-      if (tok.length) notes.push(`Tokens: ${tok.join(', ')}.`);
-      notes.push(`${trace.chunks} chunks streamed (${trace.thoughtChunks} thinking).`);
-      if (trace.error) notes.push(`Error: ${trace.error}`);
-    }
-    $('timingNotes').textContent = notes.join(' ');
-    $('timing').hidden = false;
   }
 
   form.addEventListener('submit', async (e) => {
@@ -140,16 +299,13 @@
     btn.disabled = true;
     errEl.hidden = true;
     storyEl.hidden = true;
-    $('timing').hidden = true;
-    $('meta').textContent = '';
+    $('theEnd').hidden = true;
+    $('again').hidden = true;
 
-    const started = performance.now();
-    const now = () => Math.round(performance.now() - started);
-    const seen = {}, server = {};
-    let trace = null;
-    let label = 'Sending request…';
-    const tick = () => setStatus(`${label} (${Math.round(now() / 1000)}s)`);
-    tick(); const timer = setInterval(tick, 1000);
+    let i = Math.floor(Math.random() * WAITING.length);
+    setStatus(WAITING[i]);
+    const cycle = setInterval(() => setStatus(WAITING[++i % WAITING.length]), 2200);
+    let writing = false;
 
     try {
       const res = await fetch('/api/story', {
@@ -159,11 +315,11 @@
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || `Request failed (${res.status})`);
+        throw new Error(json.error || `Something went wrong (${res.status}). Please try again.`);
       }
 
       const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-      let buf = '', text = '', done = false, scrolled = false;
+      let buf = '', text = '', done = false;
       while (true) {
         const { value, done: end } = await reader.read();
         if (end) break;
@@ -172,32 +328,38 @@
         for (const line of lines) {
           if (!line.trim()) continue;
           const msg = JSON.parse(line);
-          if (msg.type === 'progress') {
-            seen[msg.stage] ??= now();
-            server[msg.stage] ??= msg.ms;
-            const stage = STAGES.find(([k]) => k === msg.stage);
-            if (stage?.[2]) { label = stage[2]; tick(); }
-          } else if (msg.type === 'text') {
-            text += msg.text; render(text);
-            if (!scrolled) { scrolled = true; storyEl.scrollIntoView({ behavior: 'smooth' }); }
-          } else if (msg.type === 'done' || msg.type === 'error') {
-            trace = msg.timing;
-            seen.end = now(); server.end = trace?.doneMs;
-            if (msg.type === 'error') throw new Error(msg.error);
+          if (msg.type === 'text') {
+            if (!writing) {
+              writing = true;
+              clearInterval(cycle);
+              setStatus('Once upon a time…');
+            }
+            text += msg.text;
+            render(text);
+            if (text.length === msg.text.length) storyEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else if (msg.type === 'error') {
+            throw new Error(msg.error);
+          } else if (msg.type === 'done') {
             done = true;
-            $('meta').textContent = `${msg.wordCount} words (target ${msg.targetWords})`;
           }
         }
       }
-      if (!done) throw new Error('The story was cut off. Please try again.');
+      if (!done) throw new Error('The story got lost on its way here. Please try again.');
+      $('theEnd').hidden = false;
+      $('again').hidden = false;
     } catch (err) {
-      seen.end ??= now();
-      errEl.textContent = err.message; errEl.hidden = false;
+      errEl.textContent = err.message;
+      errEl.hidden = false;
     } finally {
-      clearInterval(timer); setStatus('');
+      clearInterval(cycle);
+      setStatus('');
       btn.disabled = false;
-      renderTiming(seen, server, trace);
     }
+  });
+
+  $('again').addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    form.requestSubmit();
   });
 </script>
 </body>

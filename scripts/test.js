@@ -2,7 +2,15 @@
 import assert from 'node:assert/strict';
 import { normalizeInput, buildPrompt, parseStory, generateStory, targetWordCount } from '../lib/story.js';
 
-assert.throws(() => normalizeInput({ name: '', age: 5, topic: 'x', minutes: 3 }), /Name/);
+// Everything is optional; given values are still checked.
+assert.deepEqual(normalizeInput({}), { name: '', age: null, topic: '', minutes: 5 });
+assert.deepEqual(normalizeInput({ name: '', age: '', topic: '  ', minutes: '' }), { name: '', age: null, topic: '', minutes: 5 });
+const blankPrompt = buildPrompt(normalizeInput({}));
+assert.match(blankPrompt, /name: not given/);
+assert.match(blankPrompt, /age: not given/);
+assert.match(blankPrompt, /Topic: your choice/);
+assert.match(blankPrompt, /about 650 words/);
+assert.throws(() => normalizeInput({ name: 'x'.repeat(41) }), /Name/);
 assert.throws(() => normalizeInput({ name: 'A', age: 40, topic: 'x', minutes: 3 }), /Age/);
 assert.throws(() => normalizeInput({ name: 'A', age: 5, topic: 'x', minutes: 99 }), /Length/);
 assert.deepEqual(normalizeInput({ name: ' Maya ', age: '4', topic: 'dragons', minutes: '5' }),
