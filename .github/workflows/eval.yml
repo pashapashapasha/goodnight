@@ -1,0 +1,72 @@
+name: Story evals
+
+# Run from the Actions tab: "Story evals" -> "Run workflow".
+# Needs repository secrets GEMINI_API_KEY and BRAINTRUST_API_KEY
+# (Settings -> Secrets and variables -> Actions).
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Model to evaluate (blank = same as the app: newest Flash-Lite)"
+        required: false
+        default: ""
+      judge_model:
+        description: "Model that grades the stories (blank = same as the app)"
+        required: false
+        default: ""
+      trials:
+        description: "Runs per test case"
+        required: false
+        default: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Check secrets
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          BRAINTRUST_API_KEY: ${{ secrets.BRAINTRUST_API_KEY }}
+        run: |
+          missing=""
+          [ -n "$GEMINI_API_KEY" ] || missing="$missing GEMINI_API_KEY"
+          [ -n "$BRAINTRUST_API_KEY" ] || missing="$missing BRAINTRUST_API_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secret(s):$missing. Add them under Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - run: npm test
+
+      - name: Run Braintrust eval
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          BRAINTRUST_API_KEY: ${{ secrets.BRAINTRUST_API_KEY }}
+          EVAL_MODEL: ${{ inputs.model }}
+          JUDGE_MODEL: ${{ inputs.judge_model }}
+          EVAL_TRIALS: ${{ inputs.trials }}
+        run: |
+          set -o pipefail
+          npm run eval:bt -- --no-progress-bars 2>&1 | tee eval.log
+          {
+            echo "## Story eval"
+            echo
+            links=$(grep -oE 'https://[^ ]*braintrust[^ ]*' eval.log | sort -u)
+            if [ -n "$links" ]; then echo "Results: $links"; echo; fi
+            echo '```'
+            sed -n '/Experiment summary/,$p' eval.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

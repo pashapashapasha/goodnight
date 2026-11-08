@@ -28,6 +28,16 @@ npm install
 
 ## Evaluate the generator with Braintrust
 
+### From GitHub (no local setup)
+
+1. Sign up at https://www.braintrust.dev (free tier) and create an API key under **Settings → API keys**.
+2. In this GitHub repo, go to **Settings → Secrets and variables → Actions → New repository secret** and add `GEMINI_API_KEY` and `BRAINTRUST_API_KEY`.
+3. Go to **Actions → Story evals → Run workflow**. Optionally fill in a model, judge model or number of trials.
+
+The run's summary page shows the scores and a link to the experiment in Braintrust.
+
+### Locally
+
 1. Sign up at https://www.braintrust.dev (the free tier is enough) and create an API key under **Settings → API keys**.
 2. Copy `.env.example` to `.env` and fill in `GEMINI_API_KEY` and `BRAINTRUST_API_KEY`.
 3. Run:
