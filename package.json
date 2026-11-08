@@ -1,0 +1,26 @@
+{
+  "name": "goodnight",
+  "version": "1.0.0",
+  "description": "Bedtime story generator (Gemini + Vercel)",
+  "scripts": {
+    "test": "node scripts/test.js",
+    "eval": "node scripts/eval.js",
+    "dev": "vercel dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pashapashapasha/goodnight.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pashapashapasha/goodnight/issues"
+  },
+  "homepage": "https://github.com/pashapashapasha/goodnight#readme",
+  "dependencies": {
+    "@google/genai": "^3.0.0"
+  },
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  }
+}

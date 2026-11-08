@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Goodnight Stories</title>
+<style>
+  :root { --bg:#14183a; --card:#1f2550; --text:#eef0ff; --muted:#a9b0e0; --accent:#ffd27a; --err:#ff9a9a; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Georgia, "Times New Roman", serif; background: radial-gradient(circle at 20% 0%, #2a3170, var(--bg) 60%); color:var(--text); min-height:100vh; }
+  main { max-width: 680px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-weight: normal; margin: 0 0 4px; } h1 span { color: var(--accent); }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  form, article { background: var(--card); border-radius: 14px; padding: 20px; }
+  label { display:block; font-size: 14px; color: var(--muted); margin: 12px 0 4px; font-family: system-ui, sans-serif; }
+  input { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #3a4285; background:#141a40; color:var(--text); font-size:16px; }
+  .row { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  button { margin-top:18px; width:100%; padding:12px; border:0; border-radius:8px; background:var(--accent); color:#1b1b2e; font-size:16px; font-weight:600; cursor:pointer; font-family: system-ui, sans-serif; }
+  button:disabled { opacity:.6; cursor:wait; }
+  .error { color: var(--err); font-family: system-ui, sans-serif; margin-top: 12px; }
+  article { margin-top: 24px; line-height: 1.7; font-size: 18px; }
+  article h2 { font-weight: normal; color: var(--accent); margin-top: 0; }
+  .meta { color: var(--muted); font-size: 13px; font-family: system-ui, sans-serif; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Goodnight <span>Stories</span></h1>
+  <p class="sub">A fresh bedtime story, made for your little one.</p>
+
+  <form id="form">
+    <label for="name">Child's name</label>
+    <input id="name" name="name" required maxlength="40" placeholder="Maya">
+    <div class="row">
+      <div>
+        <label for="age">Age</label>
+        <input id="age" name="age" type="number" min="1" max="12" value="5" required>
+      </div>
+      <div>
+        <label for="minutes">Reading time (minutes)</label>
+        <input id="minutes" name="minutes" type="number" min="1" max="20" value="5" required>
+      </div>
+    </div>
+    <label for="topic">What should it be about?</label>
+    <input id="topic" name="topic" required maxlength="200" placeholder="a sleepy dragon who is afraid of the dark">
+    <button id="go" type="submit">Tell me a story</button>
+    <div id="error" class="error" hidden></div>
+  </form>
+
+  <article id="story" hidden>
+    <h2 id="title"></h2>
+    <div id="body"></div>
+    <p class="meta" id="meta"></p>
+  </article>
+</main>
+<script>
+  const form = document.getElementById('form');
+  const btn = document.getElementById('go');
+  const errEl = document.getElementById('error');
+  const storyEl = document.getElementById('story');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
+    btn.disabled = true; btn.textContent = 'Writing your story…';
+    errEl.hidden = true;
+    try {
+      const res = await fetch('/api/story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
+      document.getElementById('title').textContent = json.title;
+      const body = document.getElementById('body');
+      body.replaceChildren(...json.body.split(/\n\s*\n/).map(p => {
+        const el = document.createElement('p'); el.textContent = p.trim(); return el;
+      }));
+      document.getElementById('meta').textContent = `${json.wordCount} words (target ${json.targetWords})`;
+      storyEl.hidden = false;
+      storyEl.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+      errEl.textContent = err.message; errEl.hidden = false;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Tell me a story';
+    }
+  });
+</script>
+</body>
+</html>
