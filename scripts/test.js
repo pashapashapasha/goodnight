@@ -61,25 +61,51 @@ assert.equal(chooseModel(['gemini-3.8-pro']), null);
 console.log('model picking tests passed');
 
 // Eval scorers.
-import { lengthAccuracy, usesName, cleanFormat, makeStoryJudge, withRetry } from '../evals/scorers.js';
+import { lengthWithin, wordLevel, readability, usesName, cleanFormat, makeStoryJudge, withRetry, quoteFound } from '../evals/scorers.js';
 const words = (n) => Array(n).fill('word').join(' ');
-assert.equal(lengthAccuracy({ input: { minutes: 1 }, output: { body: words(130) } }).score, 1);
-assert.equal(lengthAccuracy({ input: { minutes: 1 }, output: { body: words(65) } }).score, 0);
-assert.ok(Math.abs(lengthAccuracy({ input: { minutes: 1 }, output: { body: words(143) } }).score - 0.8) < 1e-9);
+assert.equal(lengthWithin({ input: { minutes: 1 }, output: { body: words(130) } }).score, 1);
+assert.equal(lengthWithin({ input: { minutes: 1 }, output: { body: words(143) } }).score, 1); // +10%
+assert.equal(lengthWithin({ input: { minutes: 1 }, output: { body: words(144) } }).score, 0);
+assert.equal(lengthWithin({ input: { minutes: 1 }, output: { body: words(117) } }).metadata.percentOff, -10);
+
+const simple = 'Leo has a bear. The bear is soft. Leo hugs the bear. Night night, bear.';
+const dense = 'Beneath the city, where the subway trains rumbled like distant thunder, Priya discovered a library that no map had ever recorded, illuminated by lanterns that flickered whenever someone turned a page.';
+assert.equal(readability(simple).sentences, 4);
+assert.equal(wordLevel({ input: { age: 3 }, output: { body: simple } }).score, 1);
+assert.equal(wordLevel({ input: { age: 4 }, output: { body: dense } }).score, 0);
+assert.ok(wordLevel({ input: { age: 11 }, output: { body: simple } }).score < 1); // too simple for 11
+assert.equal(wordLevel({ input: {}, output: { body: simple } }).metadata.age, 5); // no age -> middle band
+
 assert.equal(usesName({ input: { name: 'Maya' }, output: { body: 'Maya slept.' } }).score, 1);
 assert.equal(usesName({ input: { name: 'Maya' }, output: { body: 'Leo slept.' } }).score, 0);
 assert.equal(usesName({ input: {}, output: { body: 'Leo slept.' } }).score, null);
 assert.equal(cleanFormat({ output: { title: 'T', body: 'a\n\nb\n\nc' } }).score, 1);
 assert.deepEqual(cleanFormat({ output: { title: 'T', body: 'Here\'s a story!\n\n**b**\n\nc' } }).metadata.problems, ['markdown in body', 'preamble']);
 
+assert.ok(quoteFound('the dragon snored, like a "teakettle"', 'Then the Dragon snored like a teakettle!'));
+assert.ok(!quoteFound('the dragon sang', 'Then the dragon snored.'));
+assert.ok(!quoteFound('dragon', 'dragon')); // single words are too easy to match
+
+const story = { title: 'Toast', body: 'Maya found a dragon the color of toast.\n\nHe snored like a teakettle.\n\nGoodnight.' };
 const judgeClient = { models: { generateContent: async (req) => {
   assert.equal(req.config.responseMimeType, 'application/json');
-  const r = (score) => ({ score, reason: 'x' });
-  return { text: JSON.stringify({ safe: r(5), calming: r(1), winds_down: r(3), age_appropriate: r(5), on_topic: r(5), engaging: r(4) }) };
+  return { text: JSON.stringify({
+    checklist: {
+      clear_goal: { answer: false, quote: '' },
+      memorable_detail: { answer: true, quote: 'a dragon the color of toast' },  // real quote
+      playful_language: { answer: true, quote: 'snored like a teakettle' },       // real quote
+      surprise: { answer: true, quote: 'the dragon flew to the moon' },          // made up -> no credit
+      not_stock_plot: { answer: true, quote: '' },                               // no quote -> no credit
+    },
+    safety: { safe: true, quote: '', reason: '' },
+  }) };
 } } };
-const judged = await makeStoryJudge({ client: judgeClient, model: 'm' })({ input: {}, output: { title: 'T', body: 'b' } });
-assert.deepEqual(Object.fromEntries(judged.map((s) => [s.name, s.score])),
-  { judge_safe: 1, judge_calming: 0, judge_winds_down: 0.5, judge_age_appropriate: 1, judge_on_topic: 1, judge_engaging: 0.75 });
+const judged = await makeStoryJudge({ client: judgeClient, model: 'm' })({ input: {}, output: story });
+const byName = Object.fromEntries(judged.map((x) => [x.name, x]));
+assert.equal(byName.entertaining.score, 2 / 5);
+assert.deepEqual(byName.entertaining.metadata.passed, ['memorable_detail', 'playful_language']);
+assert.equal(byName.entertaining.metadata.items.surprise.note, 'quote not found in story');
+assert.equal(byName.safe.score, 1);
 
 let tries = 0;
 const quiet = console.warn; console.warn = () => {};

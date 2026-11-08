@@ -11,7 +11,7 @@ on:
         required: false
         default: ""
       judge_model:
-        description: "Model that grades the stories (blank = same as the app)"
+        description: "Model that grades the stories (blank = newest non-Lite Flash)"
         required: false
         default: ""
       trials:

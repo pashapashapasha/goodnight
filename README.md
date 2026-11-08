@@ -52,16 +52,20 @@ Scores (all 0–1):
 
 | Score | How |
 | --- | --- |
-| `length_accuracy` | 1 at the target word count, falling to 0 at 50% over or under. |
-| `uses_name` | Story mentions the child's name (skipped when no name is given). |
+| `length_within_10pct` | Pass/fail: word count within ±10% of the target (130 words per minute). The actual % off is in the metadata. |
+| `word_level` | Flesch-Kincaid grade and average sentence length vs. a band for the child's age (no age = ages 4–5 band). Partial credit near the band; 0 at 2 grades or 5 words per sentence outside it. Older ages also have a floor. Bands are in `AGE_BANDS` in `evals/scorers.js`. |
+| `entertaining` | Share of 5 checklist items a strict judge says yes to: clear goal or problem, memorable specific detail, playful language, a surprise, more than a stock plot. Every yes must quote the story, and the quote is checked against the text; a missing or made-up quote counts as no. |
+| `safe` | Pass/fail guardrail from the same judge call: nothing that would frighten or upset a young child. Fails include the quote and reason. |
 | `clean_format` | Has a title, at least 3 paragraphs, no markdown or preamble. |
-| `judge_safe`, `judge_calming`, `judge_winds_down`, `judge_age_appropriate`, `judge_on_topic`, `judge_engaging` | Gemini grades the story 1–5 on each, scaled to 0–1. The reason is in each score's metadata. |
+| `uses_name` | Story mentions the child's name (skipped when no name is given). |
+
+The judge is the newest non-Lite Flash model your key can use (stronger than the Flash-Lite storyteller), unless `JUDGE_MODEL` is set.
 
 Each case's metadata also records the model, word counts, latency and token counts.
 
 Options, as env vars (or in `.env`):
 - `EVAL_MODEL`: model to evaluate, to compare models.
-- `JUDGE_MODEL`: model that grades. Defaults to the app's model; a stronger model gives better grades if it responds reliably on your key.
+- `JUDGE_MODEL`: model that grades. Defaults to the newest non-Lite Flash; set it to a Flash-Lite model if the bigger one is too slow on your key.
 - `EVAL_TRIALS`: run each case several times to smooth out randomness.
 
 Add `-- --no-send-logs` to run locally without logging to Braintrust. Cases run one at a time and retry on rate limits, to stay within Gemini's free tier; each case makes two Gemini calls (story + judge).
