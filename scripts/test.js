@@ -59,3 +59,31 @@ assert.equal(chooseModel([
 assert.equal(chooseModel(['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.8-flash-tts']), 'gemini-3.8-flash');
 assert.equal(chooseModel(['gemini-3.8-pro']), null);
 console.log('model picking tests passed');
+
+// Eval scorers.
+import { lengthAccuracy, usesName, cleanFormat, makeStoryJudge, withRetry } from '../evals/scorers.js';
+const words = (n) => Array(n).fill('word').join(' ');
+assert.equal(lengthAccuracy({ input: { minutes: 1 }, output: { body: words(130) } }).score, 1);
+assert.equal(lengthAccuracy({ input: { minutes: 1 }, output: { body: words(65) } }).score, 0);
+assert.ok(Math.abs(lengthAccuracy({ input: { minutes: 1 }, output: { body: words(143) } }).score - 0.8) < 1e-9);
+assert.equal(usesName({ input: { name: 'Maya' }, output: { body: 'Maya slept.' } }).score, 1);
+assert.equal(usesName({ input: { name: 'Maya' }, output: { body: 'Leo slept.' } }).score, 0);
+assert.equal(usesName({ input: {}, output: { body: 'Leo slept.' } }).score, null);
+assert.equal(cleanFormat({ output: { title: 'T', body: 'a\n\nb\n\nc' } }).score, 1);
+assert.deepEqual(cleanFormat({ output: { title: 'T', body: 'Here\'s a story!\n\n**b**\n\nc' } }).metadata.problems, ['markdown in body', 'preamble']);
+
+const judgeClient = { models: { generateContent: async (req) => {
+  assert.equal(req.config.responseMimeType, 'application/json');
+  const r = (score) => ({ score, reason: 'x' });
+  return { text: JSON.stringify({ safe: r(5), calming: r(1), winds_down: r(3), age_appropriate: r(5), on_topic: r(5), engaging: r(4) }) };
+} } };
+const judged = await makeStoryJudge({ client: judgeClient, model: 'm' })({ input: {}, output: { title: 'T', body: 'b' } });
+assert.deepEqual(Object.fromEntries(judged.map((s) => [s.name, s.score])),
+  { judge_safe: 1, judge_calming: 0, judge_winds_down: 0.5, judge_age_appropriate: 1, judge_on_topic: 1, judge_engaging: 0.75 });
+
+let tries = 0;
+const quiet = console.warn; console.warn = () => {};
+assert.equal(await withRetry(async () => { if (++tries < 3) throw Object.assign(new Error('x'), { status: 429 }); return 'ok'; }, { waitMs: 1 }), 'ok');
+await assert.rejects(withRetry(async () => { throw Object.assign(new Error('bad key'), { status: 400 }); }, { waitMs: 1 }), /bad key/);
+console.warn = quiet;
+console.log('scorer tests passed');
