@@ -21,6 +21,9 @@
   article { margin-top: 24px; line-height: 1.7; font-size: 18px; }
   article h2 { font-weight: normal; color: var(--accent); margin-top: 0; }
   .meta { color: var(--muted); font-size: 13px; font-family: system-ui, sans-serif; }
+  .status { color: var(--muted); font-size: 14px; font-family: system-ui, sans-serif; margin-top: 10px; display:flex; align-items:center; gap:8px; }
+  .moon { width:14px; height:14px; border-radius:50%; box-shadow: 4px -2px 0 0 var(--accent); animation: spin 1.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   [hidden] { display:none !important; }
 </style>
 </head>
@@ -45,6 +48,7 @@
     <label for="topic">What should it be about?</label>
     <input id="topic" name="topic" required maxlength="200" placeholder="a sleepy dragon who is afraid of the dark">
     <button id="go" type="submit">Tell me a story</button>
+    <div id="status" class="status" hidden><span class="moon"></span><span id="statusText"></span></div>
     <div id="error" class="error" hidden></div>
   </form>
 
@@ -55,36 +59,81 @@
   </article>
 </main>
 <script>
-  const form = document.getElementById('form');
-  const btn = document.getElementById('go');
-  const errEl = document.getElementById('error');
-  const storyEl = document.getElementById('story');
+  const $ = (id) => document.getElementById(id);
+  const form = $('form'), btn = $('go'), errEl = $('error'), storyEl = $('story');
+  let timer;
+
+  function setStatus(text) {
+    $('status').hidden = !text;
+    $('statusText').textContent = text || '';
+  }
+
+  // Model output is "# Title\n\nparagraphs..." and may be partial while streaming.
+  function render(text) {
+    const m = text.match(/^\s*#\s*([^\n]*)\n?([\s\S]*)$/);
+    const title = m ? m[1].trim() : '';
+    const body = m ? m[2] : text;
+    $('title').textContent = title;
+    $('title').hidden = !title;
+    $('body').replaceChildren(...body.split(/\n\s*\n/).filter(p => p.trim()).map(p => {
+      const el = document.createElement('p'); el.textContent = p.trim(); return el;
+    }));
+    storyEl.hidden = !text.trim();
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form));
-    btn.disabled = true; btn.textContent = 'Writing your story…';
+    btn.disabled = true;
     errEl.hidden = true;
+    storyEl.hidden = true;
+    $('meta').textContent = '';
+    const started = Date.now();
+    const tick = (label) => setStatus(`${label} (${Math.round((Date.now() - started) / 1000)}s)`);
+    let label = 'Dreaming up a story…';
+    tick(label); timer = setInterval(() => tick(label), 1000);
+
     try {
       const res = await fetch('/api/story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
-      document.getElementById('title').textContent = json.title;
-      const body = document.getElementById('body');
-      body.replaceChildren(...json.body.split(/\n\s*\n/).map(p => {
-        const el = document.createElement('p'); el.textContent = p.trim(); return el;
-      }));
-      document.getElementById('meta').textContent = `${json.wordCount} words (target ${json.targetWords})`;
-      storyEl.hidden = false;
-      storyEl.scrollIntoView({ behavior: 'smooth' });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || (res.status === 504
+          ? 'The server timed out waiting for Gemini. Please try again.'
+          : `Request failed (${res.status})`));
+      }
+
+      label = 'Writing…';
+      const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+      let buf = '', text = '', done = false, scrolled = false;
+      while (true) {
+        const { value, done: end } = await reader.read();
+        if (end) break;
+        buf += value;
+        const lines = buf.split('\n'); buf = lines.pop();
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const msg = JSON.parse(line);
+          if (msg.type === 'text') {
+            text += msg.text; render(text);
+            if (!scrolled) { scrolled = true; storyEl.scrollIntoView({ behavior: 'smooth' }); }
+          } else if (msg.type === 'done') {
+            done = true;
+            $('meta').textContent = `${msg.wordCount} words (target ${msg.targetWords})`;
+          } else if (msg.type === 'error') {
+            throw new Error(msg.error);
+          }
+        }
+      }
+      if (!done) throw new Error('The story was cut off. Please try again.');
     } catch (err) {
       errEl.textContent = err.message; errEl.hidden = false;
     } finally {
-      btn.disabled = false; btn.textContent = 'Tell me a story';
+      clearInterval(timer); setStatus('');
+      btn.disabled = false;
     }
   });
 </script>

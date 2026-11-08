@@ -26,7 +26,7 @@ for (const [i, c] of cases.entries()) {
     const s = await generateStory(c, { model });
     const lengthRatio = +(s.wordCount / s.targetWords).toFixed(2);
     const mentionsName = s.body.includes(c.name);
-    results.push({ ...c, ok: true, title: s.title, wordCount: s.wordCount, targetWords: s.targetWords, lengthRatio, mentionsName, latencyMs: s.latencyMs });
+    results.push({ ...c, ok: true, title: s.title, wordCount: s.wordCount, targetWords: s.targetWords, lengthRatio, mentionsName, firstChunkMs: s.firstChunkMs, latencyMs: s.latencyMs });
     await writeFile(new URL(`${c.id}.md`, outDir), `# ${s.title}\n\n${s.body}\n\n---\nprompt:\n${s.prompt}\n`);
     console.log(`${s.wordCount}/${s.targetWords} words (x${lengthRatio}), ${s.latencyMs}ms`);
   } catch (err) {
@@ -36,6 +36,6 @@ for (const [i, c] of cases.entries()) {
 }
 
 await writeFile(new URL('results.json', outDir), JSON.stringify({ model, results }, null, 2));
-console.table(results.map(({ id, ok, wordCount, targetWords, lengthRatio, mentionsName, latencyMs }) =>
-  ({ id, ok, wordCount, targetWords, lengthRatio, mentionsName, latencyMs })));
+console.table(results.map(({ id, ok, wordCount, targetWords, lengthRatio, mentionsName, firstChunkMs, latencyMs }) =>
+  ({ id, ok, wordCount, targetWords, lengthRatio, mentionsName, firstChunkMs, latencyMs })));
 console.log(`Saved to ${outDir.pathname}`);

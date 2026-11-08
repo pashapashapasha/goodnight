@@ -12,13 +12,21 @@ assert.match(buildPrompt({ name: 'Maya', age: 4, topic: 'dragons', minutes: 5 })
 assert.deepEqual(parseStory('# The Moon\n\nOnce upon a time.'), { title: 'The Moon', body: 'Once upon a time.' });
 assert.equal(parseStory('No title here').title, 'A Bedtime Story');
 
-const fake = { models: { generateContent: async (req) => {
+const fake = { models: { generateContentStream: async (req) => {
   assert.equal(req.model, 'test-model');
-  return { text: '# Sleepy\n\nMaya yawned. Goodnight.' };
+  assert.equal(req.config.thinkingConfig.thinkingLevel, 'LOW');
+  return (async function* () {
+    yield { text: '# Sleepy\n\nMaya ' };
+    yield { text: undefined }; // thought/empty chunks are skipped
+    yield { text: 'yawned. Goodnight.' };
+  })();
 } } };
 const s = await generateStory({ name: 'Maya', age: 4, topic: 'x', minutes: 2 }, { client: fake, model: 'test-model' });
 assert.equal(s.title, 'Sleepy');
 assert.equal(s.wordCount, 3);
 assert.equal(s.targetWords, targetWordCount(2));
+
+const empty = { models: { generateContentStream: async () => (async function* () {})() } };
+await assert.rejects(generateStory({ name: 'Maya', age: 4, topic: 'x', minutes: 2 }, { client: empty }), /empty response/);
 
 console.log('all tests passed');
