@@ -8,8 +8,8 @@ const STEP_TIMEOUT_MS = 20_000;
 // Gemini errors arrive as (sometimes double-encoded) JSON; pull out the readable message.
 function readable(err) {
   const raw = String(err?.message || err);
-  const m = raw.match(/message\\*":\s*\\*"([^"\\]+)/);
-  return (m ? m[1] : raw).slice(0, 300);
+  const messages = [...raw.matchAll(/message\\*":\s*\\*"([^"\\]+)/g)].map((m) => m[1]).filter((m) => m.trim() !== '{');
+  return (messages.at(-1) || raw).slice(0, 300);
 }
 
 async function step(name, fn) {
