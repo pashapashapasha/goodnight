@@ -41,3 +41,13 @@ const empty = { models: { generateContentStream: async () => (async function* ()
 await assert.rejects(generateStory({ name: 'Maya', age: 4, topic: 'x', minutes: 2 }, { client: empty }), /empty response/);
 
 console.log('all tests passed');
+
+// Model picking: newest stable general-purpose Flash-Lite, else newest Flash.
+import { chooseModel } from '../lib/story.js';
+assert.equal(chooseModel([
+  'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.7-flash-lite', 'gemini-3.7-flash-lite-preview-09-2026',
+  'gemini-3.8-flash-lite-tts', 'gemini-2.0-flash-lite', 'gemini-3.8-flash-image', 'gemini-3.7-flash-lite-001',
+]), 'gemini-3.7-flash-lite');
+assert.equal(chooseModel(['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.8-flash-tts']), 'gemini-3.8-flash');
+assert.equal(chooseModel(['gemini-3.8-pro']), null);
+console.log('model picking tests passed');

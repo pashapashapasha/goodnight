@@ -45,7 +45,7 @@ Settings (env vars, or options to `generateStory`/`streamStory`):
 
 | Env var | Option | Default | |
 | --- | --- | --- | --- |
-| `GEMINI_MODEL` | `model` | `gemini-flash-lite-latest` | Which Gemini model to use. |
+| `GEMINI_MODEL` | `model` | newest Flash-Lite your key can use | Which Gemini model to use. If unset, the app lists the models your key can call (once per server instance) and picks the newest stable Flash-Lite. |
 | `GEMINI_THINKING_LEVEL` | `thinkingLevel` | model default for Flash-Lite, else `LOW` | `MINIMAL`, `LOW`, `MEDIUM`, `HIGH`. Higher is slower; stories rarely benefit. |
 | | `timeoutMs` | `240000` | Gives up on Gemini after this long. |
 

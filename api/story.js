@@ -17,7 +17,9 @@ function friendlyError(err) {
     return 'Gemini took too long to respond.';
   }
   if (err?.status === 404 || /not found/i.test(msg)) {
-    return 'The Gemini model was not found. Check the GEMINI_MODEL setting.';
+    return process.env.GEMINI_MODEL
+      ? `The Gemini model "${process.env.GEMINI_MODEL}" was not found. Check the GEMINI_MODEL setting in Vercel.`
+      : 'The Gemini model was not found.';
   }
   if (err?.status === 400 && /API key/i.test(msg)) {
     return 'The Gemini API key is invalid. Check GEMINI_API_KEY.';
