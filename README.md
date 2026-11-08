@@ -73,6 +73,6 @@ The API key only lives on the server; the browser never sees it.
 
 ## Troubleshooting
 
-Open `https://<your-site>.vercel.app/api/health`. It makes a few tiny Gemini requests with the deployed key and shows, for each one, whether it worked, how long it took and any error, plus the Flash models your key can use. Each request to it uses a little of your Gemini quota.
+After every story (or failure) the page shows **Where the time went**: when the request reached the server, when it was sent to Gemini, when Gemini replied, when it started thinking, when the first story words arrived and when it finished, plus the model version, token counts (including thinking tokens) and any error. The same trace is logged in the Vercel project's Logs tab (`story: done {...}` / `story: failed {...}`) and included in eval results.
 
-The story function also logs each step (`story: calling Gemini`, `first text after …`, `finished after …`) in the Vercel project's Logs tab.
+`/api/health` runs a few tiny Gemini requests with the deployed key and a speed comparison of model/thinking setups. Each visit uses a little of your Gemini quota.

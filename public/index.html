@@ -24,6 +24,13 @@
   .status { color: var(--muted); font-size: 14px; font-family: system-ui, sans-serif; margin-top: 10px; display:flex; align-items:center; gap:8px; }
   .moon { width:14px; height:14px; border-radius:50%; box-shadow: 4px -2px 0 0 var(--accent); animation: spin 1.6s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  #timing { margin-top: 24px; background: var(--card); border-radius: 14px; padding: 14px 20px; font-family: system-ui, sans-serif; font-size: 13px; color: var(--muted); }
+  #timing summary { cursor: pointer; color: var(--text); }
+  #timing table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+  #timing td, #timing th { text-align: left; padding: 3px 6px; border-bottom: 1px solid #2c3470; font-weight: normal; }
+  #timing td.n, #timing th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #timing .slow { color: var(--err); }
+  #timing p { margin: 8px 0 0; }
   [hidden] { display:none !important; }
 </style>
 </head>
@@ -57,11 +64,29 @@
     <div id="body"></div>
     <p class="meta" id="meta"></p>
   </article>
+
+  <details id="timing" hidden open>
+    <summary>Where the time went</summary>
+    <table>
+      <thead><tr><th>Step</th><th class="n">Seen by page</th><th class="n">On server</th></tr></thead>
+      <tbody id="timingRows"></tbody>
+    </table>
+    <p id="timingNotes"></p>
+  </details>
 </main>
 <script>
   const $ = (id) => document.getElementById(id);
   const form = $('form'), btn = $('go'), errEl = $('error'), storyEl = $('story');
-  let timer;
+
+  const STAGES = [
+    ['server', 'Request reached the server', 'Connected. Asking Gemini…'],
+    ['gemini-request', 'Request sent to Gemini', 'Waiting for Gemini…'],
+    ['gemini-response', 'Gemini replied', 'Gemini replied, waiting for the story…'],
+    ['thinking', 'Gemini started thinking', 'Gemini is thinking…'],
+    ['writing', 'First story words', 'Writing…'],
+    ['end', 'Finished', ''],
+  ];
+  const sec = (ms) => ms == null ? '–' : (ms / 1000).toFixed(1) + 's';
 
   function setStatus(text) {
     $('status').hidden = !text;
@@ -81,17 +106,50 @@
     storyEl.hidden = !text.trim();
   }
 
+  // seen: stage -> ms since click (as observed by the page); server: stage -> ms on server.
+  function renderTiming(seen, server, trace) {
+    const rows = STAGES.filter(([k]) => seen[k] != null || server[k] != null).map(([k, label], i, arr) => {
+      const prev = i > 0 ? seen[arr[i - 1][0]] : 0;
+      const slow = seen[k] != null && prev != null && seen[k] - prev > 5000;
+      const tr = document.createElement('tr');
+      if (slow) tr.className = 'slow';
+      for (const [v, cls] of [[label, ''], [sec(seen[k]), 'n'], [sec(server[k]), 'n']]) {
+        const td = document.createElement('td'); td.textContent = v; if (cls) td.className = cls; tr.append(td);
+      }
+      return tr;
+    });
+    $('timingRows').replaceChildren(...rows);
+
+    const notes = [];
+    if (trace) {
+      notes.push(`Model: ${trace.modelVersion || trace.model}, thinking ${trace.thinkingLevel}.`);
+      if (trace.geminiStatus) notes.push(`Gemini HTTP status ${trace.geminiStatus}.`);
+      const tok = [['prompt', trace.promptTokens], ['thinking', trace.thoughtsTokens], ['story', trace.outputTokens]]
+        .filter(([, n]) => n != null).map(([k, n]) => `${n} ${k}`);
+      if (tok.length) notes.push(`Tokens: ${tok.join(', ')}.`);
+      notes.push(`${trace.chunks} chunks streamed (${trace.thoughtChunks} thinking).`);
+      if (trace.error) notes.push(`Error: ${trace.error}`);
+    }
+    $('timingNotes').textContent = notes.join(' ');
+    $('timing').hidden = false;
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form));
     btn.disabled = true;
     errEl.hidden = true;
     storyEl.hidden = true;
+    $('timing').hidden = true;
     $('meta').textContent = '';
-    const started = Date.now();
-    const tick = (label) => setStatus(`${label} (${Math.round((Date.now() - started) / 1000)}s)`);
-    let label = 'Dreaming up a story…';
-    tick(label); timer = setInterval(() => tick(label), 1000);
+
+    const started = performance.now();
+    const now = () => Math.round(performance.now() - started);
+    const seen = {}, server = {};
+    let trace = null;
+    let label = 'Sending request…';
+    const tick = () => setStatus(`${label} (${Math.round(now() / 1000)}s)`);
+    tick(); const timer = setInterval(tick, 1000);
 
     try {
       const res = await fetch('/api/story', {
@@ -101,12 +159,9 @@
       });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || (res.status === 504
-          ? 'The server timed out waiting for Gemini. Please try again.'
-          : `Request failed (${res.status})`));
+        throw new Error(json.error || `Request failed (${res.status})`);
       }
 
-      label = 'Writing…';
       const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
       let buf = '', text = '', done = false, scrolled = false;
       while (true) {
@@ -117,23 +172,31 @@
         for (const line of lines) {
           if (!line.trim()) continue;
           const msg = JSON.parse(line);
-          if (msg.type === 'text') {
+          if (msg.type === 'progress') {
+            seen[msg.stage] ??= now();
+            server[msg.stage] ??= msg.ms;
+            const stage = STAGES.find(([k]) => k === msg.stage);
+            if (stage?.[2]) { label = stage[2]; tick(); }
+          } else if (msg.type === 'text') {
             text += msg.text; render(text);
             if (!scrolled) { scrolled = true; storyEl.scrollIntoView({ behavior: 'smooth' }); }
-          } else if (msg.type === 'done') {
+          } else if (msg.type === 'done' || msg.type === 'error') {
+            trace = msg.timing;
+            seen.end = now(); server.end = trace?.doneMs;
+            if (msg.type === 'error') throw new Error(msg.error);
             done = true;
             $('meta').textContent = `${msg.wordCount} words (target ${msg.targetWords})`;
-          } else if (msg.type === 'error') {
-            throw new Error(msg.error);
           }
         }
       }
       if (!done) throw new Error('The story was cut off. Please try again.');
     } catch (err) {
+      seen.end ??= now();
       errEl.textContent = err.message; errEl.hidden = false;
     } finally {
       clearInterval(timer); setStatus('');
       btn.disabled = false;
+      renderTiming(seen, server, trace);
     }
   });
 </script>

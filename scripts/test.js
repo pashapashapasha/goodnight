@@ -15,9 +15,10 @@ assert.equal(parseStory('No title here').title, 'A Bedtime Story');
 const fake = { models: { generateContentStream: async (req) => {
   assert.equal(req.model, 'test-model');
   assert.equal(req.config.thinkingConfig.thinkingLevel, 'LOW');
+  assert.equal(req.config.thinkingConfig.includeThoughts, true);
   return (async function* () {
     yield { text: '# Sleepy\n\nMaya ' };
-    yield { text: undefined }; // thought/empty chunks are skipped
+    yield { candidates: [{ content: { parts: [{ text: 'hmm', thought: true }] } }], text: undefined }; // thinking is not story text
     yield { text: 'yawned. Goodnight.' };
   })();
 } } };
@@ -25,6 +26,9 @@ const s = await generateStory({ name: 'Maya', age: 4, topic: 'x', minutes: 2 }, 
 assert.equal(s.title, 'Sleepy');
 assert.equal(s.wordCount, 3);
 assert.equal(s.targetWords, targetWordCount(2));
+assert.equal(s.trace.chunks, 3);
+assert.equal(s.trace.thoughtChunks, 1);
+assert.ok(s.trace.firstTextMs !== null && s.trace.doneMs !== null);
 
 const empty = { models: { generateContentStream: async () => (async function* () {})() } };
 await assert.rejects(generateStory({ name: 'Maya', age: 4, topic: 'x', minutes: 2 }, { client: empty }), /empty response/);
