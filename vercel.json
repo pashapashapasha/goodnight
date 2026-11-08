@@ -1,6 +1,6 @@
 {
   "functions": {
     "api/story.js": { "maxDuration": 300 },
-    "api/health.js": { "maxDuration": 120 }
+    "api/health.js": { "maxDuration": 300 }
   }
 }
