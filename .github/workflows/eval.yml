@@ -18,6 +18,14 @@ on:
         description: "Runs per test case"
         required: false
         default: "1"
+      prompt:
+        description: "Prompt version (v1 = what the app uses, v2 = sensory details + slower ending)"
+        required: false
+        default: "v1"
+      experiment_name:
+        description: "Experiment name in Braintrust (blank = generated)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -58,6 +66,8 @@ jobs:
           EVAL_MODEL: ${{ inputs.model }}
           JUDGE_MODEL: ${{ inputs.judge_model }}
           EVAL_TRIALS: ${{ inputs.trials }}
+          EVAL_PROMPT: ${{ inputs.prompt }}
+          EVAL_EXPERIMENT: ${{ inputs.experiment_name }}
         run: |
           set -o pipefail
           npm run eval:bt -- --no-progress-bars 2>&1 | tee eval.log

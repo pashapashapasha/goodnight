@@ -17,6 +17,9 @@ assert.deepEqual(normalizeInput({ name: ' Maya ', age: '4', topic: 'dragons', mi
   { name: 'Maya', age: 4, topic: 'dragons', minutes: 5 });
 
 assert.match(buildPrompt({ name: 'Maya', age: 4, topic: 'dragons', minutes: 5 }), /about 650 words/);
+assert.doesNotMatch(buildPrompt({ name: 'Maya', age: 4, topic: 'dragons', minutes: 5 }), /sensory/);
+assert.match(buildPrompt({ name: 'Maya', age: 4, topic: 'dragons', minutes: 5 }, 'v2'), /sensory details/);
+assert.throws(() => buildPrompt({ name: 'Maya', age: 4, topic: 'dragons', minutes: 5 }, 'v9'), /Unknown prompt version/);
 assert.deepEqual(parseStory('# The Moon\n\nOnce upon a time.'), { title: 'The Moon', body: 'Once upon a time.' });
 assert.equal(parseStory('No title here').title, 'A Bedtime Story');
 
