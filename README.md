@@ -66,7 +66,9 @@ Each case's metadata also records the model, word counts, latency and token coun
 
 Options, as env vars (or in `.env`):
 - `EVAL_MODEL`: model to evaluate, to compare models.
-- `JUDGE_MODEL`: model that grades. Defaults to the newest non-Lite Flash; set it to a Flash-Lite model if the bigger one is too slow on your key.
+- `JUDGE_MODEL`: model that grades. Defaults to the newest non-Lite Flash; set it to `lite` (newest Flash-Lite) or a specific model if the bigger one is too slow on your key.
+- `EVAL_PROMPT`: prompt version to evaluate (`v1`, the app's prompt, or `v2`). See `PROMPT_ADDITIONS` in `lib/story.js`.
+- `EVAL_EXPERIMENT`: experiment name in Braintrust (default: generated).
 - `EVAL_TRIALS`: run each case several times to smooth out randomness.
 
 Add `-- --no-send-logs` to run locally without logging to Braintrust. Cases run one at a time and retry on rate limits, to stay within Gemini's free tier; each case makes two Gemini calls (story + judge).

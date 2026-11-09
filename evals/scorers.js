@@ -166,9 +166,13 @@ export function quoteFound(quote, story) {
   return q.split(' ').length >= 2 && normalize(story).includes(q);
 }
 
-/** Default judge: the newest non-Lite Flash model the key can use (stronger than the storyteller). */
-async function pickJudgeModel(ai) {
+/**
+ * Default judge: the newest non-Lite Flash model the key can use (stronger than the storyteller).
+ * JUDGE_MODEL=lite picks the newest Flash-Lite instead (faster; the bigger Flash can stall on the free tier).
+ */
+async function pickJudgeModel(ai, preference) {
   const names = await listGenerateModels(ai);
+  if (preference === 'lite') return chooseModel(names);
   return chooseModel(names.filter((n) => !/lite/.test(n))) || chooseModel(names);
 }
 
@@ -181,9 +185,9 @@ export const JUDGE_TIMEOUT_MS = 180_000;
  */
 export function makeStoryJudge({ apiKey = process.env.GEMINI_API_KEY, model = process.env.JUDGE_MODEL, client, call = withRetry } = {}) {
   const ai = client || new GoogleGenAI({ apiKey, httpOptions: { timeout: JUDGE_TIMEOUT_MS } });
-  let judgeModel = model || null;
+  let judgeModel = model && model !== 'lite' ? model : null;
   return async function storyJudge({ input, output }) {
-    judgeModel ||= await pickJudgeModel(ai);
+    judgeModel ||= await pickJudgeModel(ai, model);
     const res = await call(() => ai.models.generateContent({
       model: judgeModel,
       contents: judgePrompt(input, output),
