@@ -70,6 +70,7 @@ assert.equal(lengthWithin({ input: { minutes: 1 }, output: { body: words(130) } 
 assert.equal(lengthWithin({ input: { minutes: 1 }, output: { body: words(143) } }).score, 1); // +10%
 assert.equal(lengthWithin({ input: { minutes: 1 }, output: { body: words(144) } }).score, 0);
 assert.equal(lengthWithin({ input: { minutes: 1 }, output: { body: words(117) } }).metadata.percentOff, -10);
+assert.equal(lengthWithin({ input: { minutes: 1 }, output: { body: words(100) } }).metadata.reason, '100 words vs. target 130 (-23%; allowed ±10%)');
 
 const simple = 'Leo has a bear. The bear is soft. Leo hugs the bear. Night night, bear.';
 const dense = 'Beneath the city, where the subway trains rumbled like distant thunder, Priya discovered a library that no map had ever recorded, illuminated by lanterns that flickered whenever someone turned a page.';

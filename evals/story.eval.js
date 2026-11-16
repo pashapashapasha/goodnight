@@ -14,6 +14,9 @@ import cases from './cases.json';
 
 const promptVersion = process.env.EVAL_PROMPT || 'v1';
 
+/** Wrap a scorer so its span in the trace has a readable name. */
+const named = (name, fn) => Object.defineProperty((args) => fn(args), 'name', { value: name });
+
 Eval('goodnight', {
   experimentName: process.env.EVAL_EXPERIMENT || undefined,
   data: () => cases.map(({ id, ...input }) => ({ input, metadata: { case: id } })),
@@ -34,7 +37,14 @@ Eval('goodnight', {
     return { title: story.title, body: story.body };
   },
 
-  scores: [lengthWithin, wordLevel, makeStoryJudge(), cleanFormat, usesName],
+  // Name each scorer's span in Braintrust after the score it produces; the judge makes two.
+  scores: [
+    named('length_within_10pct', lengthWithin),
+    named('word_level', wordLevel),
+    named('judge: entertaining + safe', makeStoryJudge()),
+    named('clean_format', cleanFormat),
+    named('uses_name', usesName),
+  ],
 
   // Free tier: one case at a time keeps us under the per-minute request limit.
   maxConcurrency: 1,

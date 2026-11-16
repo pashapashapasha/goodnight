@@ -24,7 +24,10 @@ export function lengthWithin({ input, output }) {
   return {
     name: 'length_within_10pct',
     score: Math.abs(off) <= LENGTH_TOLERANCE + 1e-9 ? 1 : 0, // epsilon: 143/130 - 1 is 0.1000000000000001
-    metadata: { words, target, percentOff: Math.round(off * 100) },
+    metadata: {
+      reason: `${words} words vs. target ${target} (${off >= 0 ? '+' : ''}${Math.round(off * 100)}%; allowed ±${LENGTH_TOLERANCE * 100}%)`,
+      words, target, percentOff: Math.round(off * 100),
+    },
   };
 }
 
@@ -92,6 +95,7 @@ export function wordLevel({ input, output }) {
     name: 'word_level',
     score: (gradeScore + sentenceScore) / 2,
     metadata: {
+      reason: `Grade ${r.grade} (band ${band.minGrade ?? 'any'}–${band.maxGrade}), ${r.avgSentence} words per sentence (max ${band.maxSentence}) for age ${age}`,
       age, ageGiven: normalizeInput(input).age != null,
       band: { grade: [band.minGrade ?? 'any', band.maxGrade], maxSentence: band.maxSentence },
       ...r, gradeScore: +gradeScore.toFixed(2), sentenceScore: +sentenceScore.toFixed(2),
@@ -106,7 +110,7 @@ export function usesName({ input, output }) {
   const name = normalizeInput(input).name;
   if (!name) return { name: 'uses_name', score: null };
   const count = output.body.split(name).length - 1;
-  return { name: 'uses_name', score: count > 0 ? 1 : 0, metadata: { mentions: count } };
+  return { name: 'uses_name', score: count > 0 ? 1 : 0, metadata: { reason: `“${name}” appears ${count} time${count === 1 ? '' : 's'}`, mentions: count } };
 }
 
 /** Title present, several paragraphs, no leftover markdown or chatter. */
@@ -117,7 +121,7 @@ export function cleanFormat({ output }) {
   if (paragraphs < 3) problems.push(`only ${paragraphs} paragraph(s)`);
   if (/[*_]{2}|^#{1,6}\s|^[-*]\s/m.test(output.body)) problems.push('markdown in body');
   if (/^(sure|here('|’)s|okay)\b/i.test(output.body.trim())) problems.push('preamble');
-  return { name: 'clean_format', score: problems.length ? 0 : 1, metadata: { problems, paragraphs } };
+  return { name: 'clean_format', score: problems.length ? 0 : 1, metadata: { reason: problems.length ? problems.join(', ') : `Title and ${paragraphs} plain paragraphs`, problems, paragraphs } };
 }
 
 // ---------- LLM judge: entertaining checklist + safety ----------
@@ -207,12 +211,16 @@ export function makeStoryJudge({ apiKey = process.env.GEMINI_API_KEY, model = pr
       {
         name: 'entertaining',
         score: passed / Object.keys(CHECKLIST).length,
-        metadata: { judgeModel, passed: Object.keys(items).filter((k) => items[k].pass), items },
+        metadata: {
+          reason: `${passed} of ${Object.keys(CHECKLIST).length} checklist items with a verified quote` +
+            (passed < Object.keys(CHECKLIST).length ? `; missing: ${Object.keys(items).filter((k) => !items[k].pass).join(', ')}` : ''),
+          judgeModel, passed: Object.keys(items).filter((k) => items[k].pass), items,
+        },
       },
       {
         name: 'safe',
         score: safety.safe ? 1 : 0,
-        metadata: { judgeModel, ...(safety.safe ? {} : { quote: safety.quote, reason: safety.reason }) },
+        metadata: { judgeModel, ...(safety.safe ? { reason: 'Nothing scary found' } : { quote: safety.quote, reason: safety.reason }) },
       },
     ];
   };

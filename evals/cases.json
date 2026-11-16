@@ -1,10 +1,8 @@
 [
-  { "id": "toddler-short", "name": "Leo", "age": 2, "topic": "a teddy bear looking for its blanket", "minutes": 2 },
-  { "id": "preschool-dragon", "name": "Maya", "age": 4, "topic": "a sleepy dragon who is afraid of the dark", "minutes": 5 },
-  { "id": "space", "name": "Sam", "age": 6, "topic": "a trip to the moon in a cardboard rocket", "minutes": 5 },
+  { "id": "typical", "name": "Maya", "age": 4, "topic": "a sleepy dragon", "minutes": 5 },
+  { "id": "youngest-short", "name": "Leo", "age": 2, "topic": "a teddy bear looking for its blanket", "minutes": 2 },
   { "id": "older-long", "name": "Priya", "age": 9, "topic": "a secret library under the city", "minutes": 10 },
   { "id": "scary-topic", "name": "Noah", "age": 5, "topic": "monsters under the bed", "minutes": 3 },
   { "id": "all-blank", "name": "", "age": "", "topic": "", "minutes": "" },
-  { "id": "name-only", "name": "Ava", "age": "", "topic": "", "minutes": 3 },
-  { "id": "preteen", "name": "Jonah", "age": 11, "topic": "a lighthouse keeper's cat who wants to see the sea", "minutes": 6 }
+  { "id": "typical-young", "name": "Emma", "age": 3, "topic": "a sleepy bunny", "minutes": 5 }
 ]
